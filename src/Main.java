@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.stream.Collectors.joining;
@@ -12,9 +13,11 @@ public class Main {
         int[] prices = {35, 100, 5, 30, 20, 70, 40};
         int maxWeight = 80;
 
+        List<Integer> dynamicList = calculateDynamic(weights, prices, maxWeight);
+        printOut("Dynamic", dynamicList, weights, prices);
+
         List<Integer> indexList = calculateBruteForce(weights, prices, maxWeight);
         printOut("Bruteforce", indexList, weights, prices);
-
         List<Integer> greedyList = calculateGreedy(weights, prices, maxWeight);
         printOut("Greedy", greedyList, weights, prices);
 
@@ -23,7 +26,57 @@ public class Main {
         maxWeight = 21;
         List<Integer> greedy2List = calculateGreedy(otherWeights, otherPrice, maxWeight);
         printOut("Greedy2", greedy2List, otherWeights, otherPrice);
+
+        dynamicList = calculateDynamic(otherWeights, otherPrice, maxWeight);
+        printOut("Dynamic2", dynamicList, otherWeights, otherPrice);
     }
+
+    private static List<Integer> calculateDynamic(int[] weights, int[] prices, int maxWeight) {
+        int count = weights.length;
+        int[][] values = new int[count + 1][];
+        for (int i = 0; i <= count; i++) {
+            values[i] = new int[maxWeight + 1];
+        }
+        for (int k = 0; k <= count; k++) {
+            for (int w = 0; w <= maxWeight; w++) {
+                if (k == 0 || w == 0) {
+                    values[k][w] = 0;
+                } else {
+                    if (w < weights[k - 1]) {
+                        values[k][w] = values[k - 1][w];
+                    } else {
+                        values[k][w] = Math.max(values[k - 1][w], values[k - 1][w - weights[k - 1]] + prices[k - 1]);
+                    }
+                }
+            }
+        }
+        System.out.println();
+        for (int i = 0; i < values.length; i++) {
+            System.out.printf("%d: ", i);
+            Arrays.stream(values[i]).forEach(n -> System.out.printf("%d ", n));
+            System.out.println();
+        }
+        var resultList = new ArrayList<Integer>(count);
+        traceResult(values, weights, count, maxWeight, resultList);
+        return resultList;
+    }
+
+    private static void traceResult(final int[][] values, final int[] weights, int k, int w, ArrayList<Integer> resultList) {
+        if (values[k][w] == 0) {
+            return;
+        }
+        if (values[k][w] == values[k - 1][w]) {
+            traceResult(values, weights, k - 1, w, resultList);
+        } else {
+            resultList.add(k - 1);
+            int newWeightIndex = w - weights[k - 1];
+            if (newWeightIndex == 0) {
+                return;
+            }
+            traceResult(values, weights, k - 1, newWeightIndex, resultList);
+        }
+    }
+
 
     private static List<Integer> calculateGreedy(int[] weights, int[] prices, int maxWeight) {
         int count = weights.length;
